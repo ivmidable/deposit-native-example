@@ -121,4 +121,12 @@ mod tests {
         setup_contract(deps.as_mut());
         deposit_coins(deps.as_mut());
     }
+
+    //Add code to query the deposits and check if they were properly stored
+    #[test]
+    fn _0_query_deposit() {
+        let mut deps = mock_dependencies();
+        setup_contract(deps.as_mut());
+        deposit_coins(deps.as_mut());
+    }
 }
