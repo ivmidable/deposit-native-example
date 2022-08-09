@@ -11,4 +11,7 @@ pub enum ContractError {
 
     #[error("Invalid Owner")]
     InvalidOwner {},
+
+    #[error("Invalid Coin")]
+    InvalidCoin {},
 }

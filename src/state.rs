@@ -11,4 +11,5 @@ pub struct Deposits {
     pub coins: Coin
 }
 
-pub const DEPOSITS: Map<&str, Deposits> = Map::new("deposits");
+//key is address, denom
+pub const DEPOSITS: Map<(&str, &str), Deposits> = Map::new("deposits");
