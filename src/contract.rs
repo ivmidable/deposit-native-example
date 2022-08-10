@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    Order, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128, to_binary, coin
+    Order, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128, to_binary, coin, BankMsg
 };
 // use cw2::set_contract_version;
 
@@ -33,6 +33,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Deposit { } => execute_deposit(deps, info),
+        ExecuteMsg::Withdraw { amount, denom } => execute_withdraw(deps, info, amount, denom),
     }
 }
 
@@ -76,6 +77,32 @@ pub fn execute_deposit(
     )
 }
 
+pub fn execute_withdraw(
+    deps: DepsMut,
+    info: MessageInfo,
+    amount:u128,
+    denom:String
+) -> Result<Response, ContractError> {
+    let sender = info.sender.clone().into_string();
+
+    let mut deposit = DEPOSITS.load(deps.storage, (&sender, denom.as_str())).unwrap();
+    deposit.coins.amount = deposit.coins.amount.checked_sub(Uint128::from(amount)).unwrap();
+    deposit.count = deposit.count.checked_sub(1).unwrap();
+    DEPOSITS.save(deps.storage, (&sender, denom.as_str()), &deposit).unwrap();
+
+    let msg = BankMsg::Send {
+        to_address: sender.clone(),
+        amount: vec![coin(amount, denom.clone())],
+    };
+
+    Ok(Response::new()
+        .add_attribute("execute", "withdraw")
+        .add_attribute("denom", denom)
+        .add_attribute("amount", amount.to_string())
+        .add_message(msg)
+    )
+}
+
 fn query_deposits(deps: Deps, address:String) -> StdResult<DepositResponse> {
     let res: StdResult<Vec<_>> = DEPOSITS.prefix(&address).range(deps.storage, None, None, Order::Ascending).collect();
     let deposits = res?;
@@ -109,6 +136,20 @@ mod tests {
         assert_eq!(AMOUNT.to_string(), res.attributes[2].value);
     }
 
+    fn withdraw_coins(deps: DepsMut) {
+
+    }
+
+    fn query_coins(deps: Deps) {
+        let msg: QueryMsg = QueryMsg::Deposits { address: SENDER.to_string() };
+        let res = query(deps, mock_env(), msg).unwrap();
+        let query = from_binary::<DepositResponse>(&res).unwrap();
+        assert_eq!(SENDER, query.deposits[0].1.owner);
+        assert_eq!(DENOM, query.deposits[0].1.coins.denom);
+        assert_eq!(AMOUNT.to_string(), query.deposits[0].1.coins.amount.to_string());
+        assert_eq!(1, query.deposits[0].1.count);
+    }
+
     #[test]
     fn _0_instantiate() {
         let mut deps = mock_dependencies();
@@ -124,9 +165,18 @@ mod tests {
 
     //Add code to query the deposits and check if they were properly stored
     #[test]
-    fn _0_query_deposit() {
+    fn _2_query_deposit() {
+        let mut deps = mock_dependencies();
+        setup_contract(deps.as_mut());
+        deposit_coins(deps.as_mut());
+        query_coins(deps.as_ref());
+    }
+
+    #[test]
+    fn _1_deposit_then_withdraw() {
         let mut deps = mock_dependencies();
         setup_contract(deps.as_mut());
         deposit_coins(deps.as_mut());
     }
+
 }
