@@ -11,5 +11,16 @@ pub struct Deposits {
     pub coins: Coin
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct Offer {
+    pub token_id: String,
+    pub amount: Coin
+}
+
 //key is address, denom
 pub const DEPOSITS: Map<(&str, &str), Deposits> = Map::new("deposits");
+
+//key can be address and token_id
+//or it could be token_id and address
+pub const BIDS: Map<(&str, &str), Offer> = Map::new("bids");
+pub const ASKS: Map<(&str, &str), Offer> = Map::new("asks");

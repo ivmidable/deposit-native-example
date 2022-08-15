@@ -1,26 +1,28 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    Order, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128, to_binary, coin, BankMsg
+    Order, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128, to_binary, coin, BankMsg
 };
+use cw2::set_contract_version;
 // use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, DepositResponse};
 use crate::state::{Deposits, DEPOSITS};
 
-/*
-const CONTRACT_NAME: &str = "crates.io:deposit-native-example";
+
+const CONTRACT_NAME: &str = "deposit-native-example";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
- */
+
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
     _msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     Ok(Response::default())
 }
 
@@ -84,7 +86,7 @@ pub fn execute_withdraw(
     denom:String
 ) -> Result<Response, ContractError> {
     let sender = info.sender.clone().into_string();
-
+    
     let mut deposit = DEPOSITS.load(deps.storage, (&sender, denom.as_str())).unwrap();
     deposit.coins.amount = deposit.coins.amount.checked_sub(Uint128::from(amount)).unwrap();
     deposit.count = deposit.count.checked_sub(1).unwrap();
@@ -123,6 +125,7 @@ mod tests {
         let msg = InstantiateMsg { };
         let info = mock_info(SENDER, &[]);
         let res = instantiate(deps, mock_env(), info, msg).unwrap();
+        println!("{:?}", res);
         assert_eq!(0, res.messages.len());
     }
 
