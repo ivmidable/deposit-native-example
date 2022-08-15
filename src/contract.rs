@@ -105,6 +105,33 @@ pub fn execute_withdraw(
     )
 }
 
+pub fn execute_add_bid(
+    deps: DepsMut,
+    info: MessageInfo,
+    token_id:String,
+) -> Result<Response, ContractError> {
+    unimplemented!()
+}
+
+pub fn execute_add_ask(
+    deps: DepsMut,
+    info: MessageInfo,
+    token_id:String,
+    amount:u128,
+    denom:String
+) -> Result<Response, ContractError> {
+    unimplemented!()
+}
+
+
+pub fn execute_remove_offer(
+    deps: DepsMut,
+    info: MessageInfo,
+    token_id:String,
+) -> Result<Response, ContractError> {
+    unimplemented!()
+}
+
 fn query_deposits(deps: Deps, address:String) -> StdResult<DepositResponse> {
     let res: StdResult<Vec<_>> = DEPOSITS.prefix(&address).range(deps.storage, None, None, Order::Ascending).collect();
     let deposits = res?;

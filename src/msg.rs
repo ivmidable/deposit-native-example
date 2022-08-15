@@ -14,7 +14,8 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     Deposit { },
     Withdraw { amount:u128, denom:String },
-    AddOffer { token_id: String, amount: u128, bid: bool },
+    AddBid { token_id:String },
+    AddAsk { token_id:String, amount:u128, denom:String },
     RemoveOffer { token_id: String },
 }
 
