@@ -14,4 +14,7 @@ pub enum ContractError {
 
     #[error("Invalid Coin")]
     InvalidCoin {},
+
+    #[error("Bid from this address already exits for this token_id")]
+    InvalidBid {},
 }
