@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    Order, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128, to_binary, coin, BankMsg
+    Order, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Uint128, to_binary, coin, BankMsg
 };
 // use cw2::set_contract_version;
 
@@ -21,6 +21,9 @@ pub fn instantiate(
     _info: MessageInfo,
     _msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
+    CONFIG.save(_deps.storage, &Config {
+        owner: _info.sender.clone(),
+    })?;
     Ok(Response::default())
 }
 
@@ -32,17 +35,70 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Deposit { } => execute_deposit(deps, info),
-        ExecuteMsg::Withdraw { amount, denom } => execute_withdraw(deps, info, amount, denom),
+        ExecuteMsg::Deposit { } => execute::execute_deposit(deps, info),
+        ExecuteMsg::Withdraw { amount, denom } => execute::execute_withdraw(deps, info, amount, denom),
     }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
+        //TODO: fix the reason query_deposits can't be called from here.
         QueryMsg::Deposits { address } => {
-            to_binary(&query_deposits(deps, address)?)
+            to_binary(&query::query_deposits(deps, address)?)
         }
+        //TODO: add a querymsg for the get config function.
+    }
+}
+
+// TODO: move execute_deposit and execute_withdraw to the execute module.
+pub mod execute {
+    use super::*;
+
+    pub fn execute_deposit(
+        _deps: DepsMut,
+        _info: MessageInfo,
+    ) -> Result<Response, ContractError> {
+        unimplemented!()
+    }
+
+    pub fn execute_withdraw(
+        _deps: DepsMut,
+        _info: MessageInfo,
+        _amount:u128,
+        _denom:String
+    ) -> Result<Response, ContractError> {
+        unimplemented!()
+    }
+
+    pub fn update_config(
+        deps: DepsMut,
+        info: MessageInfo,
+        owner: Option<String>,
+    ) -> Result<Response, ContractError> {
+        let mut config = CONFIG.load(deps.storage)?;
+        if config.owner != info.sender {
+            return Err(ContractError::InvalidOwner {});
+        }
+        if let Some(owner) = owner {
+            config.owner = deps.api.addr_validate(&owner)?;
+        }
+        CONFIG.save(deps.storage, &config)?;
+        Ok(Response::default())
+    }
+}
+
+pub mod query {
+    use super::*;
+
+    pub fn get_config(deps: Deps) -> StdResult<Config> {
+        let config = CONFIG.load(deps.storage)?;
+        Ok(config)
+    }
+
+    //TODO: move the query deposits code to this function.
+    fn query_deposits(deps: Deps, address:String) -> StdResult<DepositResponse> {
+        unimplemented!()
     }
 }
 
@@ -52,7 +108,12 @@ pub fn execute_deposit(
 ) -> Result<Response, ContractError> {
     let sender = info.sender.clone().into_string();
     let d_coins = info.funds[0].clone();
-    //check to see if u
+    
+    //TODO: Make sure sender is the owner in config
+
+    //TODO: make sure funds array is a length of 1
+
+    //check to see if deposit exists
     match DEPOSITS.load(deps.storage, (&sender, d_coins.denom.as_str())) {
         Ok(mut deposit) => {
             //add coins to their account
